@@ -1,0 +1,259 @@
+---
+title: "Project 4"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(DT)
+library(jpeg)
+library(ggplot2)
+library(tidyverse)
+```
+
+
+```{r global, message=FALSE,warning=FALSE}
+# Test if a directory named data exists locally
+if (!dir.exists(here::here("data"))) {
+    dir.create(here::here("data"))
+}
+
+if (!dir.exists(here::here("figures"))) {
+    dir.create(here::here("figures"))
+}
+
+# saves data only once 
+files = c("tuesdata_cocktails.rda")
+if (any(!file.exists(here::here("data",files)))) {
+    tuesdata <- tidytuesdayR::tt_load('2020-05-26')
+    cocktails <- tuesdata$cocktails
+
+    # save the files to RDA objects
+    save(cocktails, file = here::here("data","tuesdata_cocktails.rda"))
+}
+
+load(here::here("data","tuesdata_cocktails.rda"))
+
+# Optimize the data 
+cocktails =cocktails %>%
+  mutate(alcoholic = tolower(alcoholic)) %>%
+  mutate(alcoholic = if_else(is.na(alcoholic), "Unknown", alcoholic)) %>%
+  select(-c(row_id, id_drink, date_modified, iba, video))
+```
+
+
+About {data-icon="ion-information-circled"}
+=====================================
+
+**Purpose**
+
+The dashboard allows for audiences to know about different cocktail drinks (alcoholic, non-alcoholic), and also know about the number or name of ingredients used in each drink. This dashboard can help the audiences have a glimpse or evaluation of cocktail drinks that they are intereted in. 
+
+The source showing alcoholic drink data for analysis comes from <a href = "https://www.tidytuesday.com/">TidyTuesday</a>, <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26">May 26th 2020</a>.
+
+**Video**
+
+<iframe width="1572" height="982" src="https://www.youtube.com/embed/GB1LbKCe3OI"></iframe>
+
+
+Data {data-icon="ion-android-list"}
+=====================================
+
+### Description
+
+The source showing Cocktail data for analysis comes from <a href = "https://www.stephaniehicks.com/jhustatprogramming2023/projects/2023-11-28-project-3/#:~:text=data%20set%20from-,TidyTuesday,-that%20you%20have">TidyTuesday</a>, <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26">May 26th 2020</a>. 
+
+There are totally 2 different `.csv` data on the website, but I only choose one of them for personal preferences.
+
+To make the data table more convenient to see, I delete some useless columns.
+
+```{r}
+renderDataTable({
+  data <- head(cocktails, n = 2104)
+  DT::datatable(data, options = list(
+    bPaginate = FALSE
+  ))
+})
+```
+
+
+
+Cocktails Pictures {data-icon="ion-ios-wineglass"}
+=====================================
+
+Inputs {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+type = unique(cocktails$alcoholic)
+selectInput('type', 'Select Type:', type)
+
+
+category = unique(cocktails$category)
+renderUI({
+  selected_type <- input$type
+  category_choices <- unique(cocktails$category[cocktails$alcoholic == selected_type])
+
+  selectizeInput("category", "Select Category:", category_choices)
+})
+
+drink_choices = unique(cocktails$drink)
+renderUI({
+  selected_type <- input$type
+  selected_category <- input$category
+  category_choices <- unique(cocktails$category[cocktails$alcoholic == selected_type])
+  
+  drink_choices_filtered <- cocktails$drink[cocktails$alcoholic == selected_type & cocktails$category == selected_category]
+  
+  selectizeInput("drink", "Select Drink:", drink_choices_filtered)
+})
+```
+
+Row
+-----------------------------------------------------------------------
+
+### Data
+
+```{r}
+renderTable(
+  cocktails %>%
+    filter(category == input$category,
+           alcoholic == input$type,
+           drink == input$drink)
+)
+```
+
+### Plot {data-height=550}
+
+```{r}
+renderPlot({
+  max_ing = max(cocktails$ingredient_number)
+  min_ing = min(cocktails$ingredient_number)
+  selection = cocktails %>%
+    filter(category == input$category,
+           alcoholic == input$type,
+           drink == input$drink) %>%
+    summarise(n = n()) %>%
+    pull(n)
+  
+  df = data.frame(max = max_ing,
+                  min = min_ing,
+                  drink = selection)
+  
+  df %>%
+    ggplot() +
+    geom_histogram(aes(x = "Drink Selected", y = drink),
+                   stat = "identity", fill = "skyblue") +
+    geom_histogram(aes(x = "Max", y = max_ing),
+                   stat = "identity", fill = "pink") +
+    geom_histogram(aes(x = "Min", y = min_ing),
+                   stat = "identity", fill = "lightgreen") +
+    coord_flip() +
+    labs(title = paste("Number of Ingredients Used in ",input$drink),
+         subtitle = "Compared to maximum number of ingredients (12) and minimum number of ingredients (1)",
+         x = "Category",
+         y = "Count") +
+    theme_classic()
+  }
+)
+```
+
+
+
+Plot1 {data-icon="ion-android-image"}
+=====================================
+
+
+
+
+Analysis {data-icon="ion-ios-analytics"}
+=====================================
+
+Row {data-height=450}
+-------------------------------------
+
+### Alcoholic Drink Category Count
+
+```{r,comment=NA,fig.width= 7, fig.height=6}
+df1 = cocktails %>%
+  filter(alcoholic == "alcoholic") %>%
+  select(category,drink, ingredient, ingredient_number) %>%
+  pivot_wider(names_from = "ingredient_number",
+              values_from = "ingredient") %>%
+  group_by(category) %>%
+  summarize(n = n())
+
+df1 %>%
+  ggplot() +
+  geom_col(aes(x = category, y = n),
+           fill = "#66c2a5") +
+  labs(
+    title = "Number of Drinks in Alcoholic Cocktail Categories",
+    subtitle = "Ordinary Drink has the most count among all alcoholic drink categories\nMilk/Float/Shake has the least count",
+    x = "Category",
+    y = "Count",
+    caption = "Christine Hou"
+  ) +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+### Alcoholic Drink Ingredients Count Distribution
+
+```{r,comment=NA, fig.width=7, fig.height=4}
+df2 <- cocktails %>%
+  filter(alcoholic == "alcoholic") %>%
+  select(drink, category,ingredient, ingredient_number) %>%
+  group_by(drink) %>%
+  summarize(num_ing = n()) %>%
+  group_by(num_ing) %>%
+  summarize(num =n()) %>%
+  mutate(percentage = num/sum(num)*100) %>%
+  mutate(num_ing = as.factor(num_ing))
+
+  
+df2 %>%
+  ggplot()+
+  geom_bar(aes(x = "", y = percentage, fill = num_ing),
+           stat = "identity") +
+  coord_polar(theta = "y", start=0) +
+  theme_void() +
+  labs(title = "Distribution of Ingredients Used in Alcoholic Drinks",
+    subtitle = "Most alcoholic drinks use 2-5 ingredients",
+    caption = "Christine Hou",
+    fill = "Number of Ingredients")
+```
+
+Row {data-height=550}
+-------------------------------------
+
+### Ingredients Distribution Per Alcoholic Drink Category
+
+```{r,comment=NA, fig.width=7, fig.height= 8}
+df3 <- cocktails %>%
+  filter(alcoholic == "alcoholic") %>%
+  select(drink, category,ingredient, ingredient_number) %>%
+  group_by(drink,category) %>%
+  summarize(num_ing = n(),
+            .groups = 'drop')
+
+df3 %>%
+  ggplot() +
+  geom_boxplot(aes(x = category, y = num_ing)) +
+  facet_wrap(~category, scales = "free") +
+  theme_minimal() +
+  coord_cartesian(ylim = c(0,13)) +
+  labs(
+    x = "Category",
+    y = "Number of Ingredients",
+    title = "Number of Ingredients Used in Alcoholic Drinks",
+    subtitle = "Drinks belonging to Homemade Liqueur category has the highest number of ingredients (12)\nDrinks belonging to Cocktail and Ordinary Drink category has the least number of ingredients (1)",
+    caption = "Christine Hou"
+  )
+```
+
