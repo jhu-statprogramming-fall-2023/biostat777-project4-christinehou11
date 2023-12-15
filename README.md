@@ -5,4 +5,6 @@ This is the repository for Project 4.
 
 Author: Christine Hou
 
-Link of deployed website: https://youtu.be/pifSnj4CgEM
+Presentation Video Link: https://youtu.be/pifSnj4CgEM
+
+Deployed Website: https://christinehou11.shinyapps.io/project4_dashboard/

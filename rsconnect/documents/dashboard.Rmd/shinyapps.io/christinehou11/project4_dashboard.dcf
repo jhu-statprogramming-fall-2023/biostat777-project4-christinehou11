@@ -1,0 +1,13 @@
+name: project4_dashboard
+title: project4_dashboard
+username: christinehou11
+account: christinehou11
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 10802750
+bundleId: 8051491
+url: https://christinehou11.shinyapps.io/project4_dashboard/
+version: 1
+asMultiple: FALSE
+asStatic: FALSE
+additionalFiles: data/tuesdata_cocktails.rda|glass/Beer Glass.jpeg|glass/Beer mug.jpeg|glass/Beer pilsner.jpeg|glass/Brandy snifter.jpeg|glass/Champagne flute.jpeg|glass/Cocktail glass.jpeg|glass/Coffee mug.jpeg|glass/Collins glass.jpeg|glass/Copper Mug.jpeg|glass/Cordial glass.jpeg|glass/Highball glass.jpeg|glass/Hurricane glass.jpeg|glass/Irish coffee cup.jpeg|glass/Jar.jpeg|glass/Margarita glass.jpeg|glass/Martini Glass.jpeg|glass/Old-fashioned glass.jpeg|glass/Parfait glass.jpeg|glass/Pint glass.jpeg|glass/Pitcher.jpeg|glass/Pousse cafe glass.jpeg|glass/Punch bowl.jpeg|glass/Shot glass.jpeg|glass/Whiskey sour glass.jpeg|glass/White wine glass.jpeg|glass/Wine Glass.jpeg

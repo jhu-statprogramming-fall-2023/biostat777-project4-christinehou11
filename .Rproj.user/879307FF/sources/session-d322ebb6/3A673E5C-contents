@@ -4,7 +4,6 @@ output:
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
-    css: style.css
 runtime: shiny
 ---
 
@@ -21,10 +20,6 @@ library(tidyverse)
 # Test if a directory named data exists locally
 if (!dir.exists(here::here("data"))) {
     dir.create(here::here("data"))
-}
-
-if (!dir.exists(here::here("figures"))) {
-    dir.create(here::here("figures"))
 }
 
 # saves data only once 
