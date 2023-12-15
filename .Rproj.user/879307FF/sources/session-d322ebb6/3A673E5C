@@ -3,7 +3,7 @@
     "path": "~/Desktop/StatWorkflow/project4/dashboard.Rmd",
     "project_path": "dashboard.Rmd",
     "type": "r_markdown",
-    "hash": "0",
+    "hash": "399154627",
     "contents": "",
     "dirty": false,
     "created": 1702435206291.0,
@@ -13,15 +13,20 @@
         "tempName": "Untitled1",
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "157,105",
-        "scrollLine": "146"
+        "cursorPosition": "101,0",
+        "scrollLine": "90",
+        "rmdVisualMode": "false",
+        "rmdVisualWrapConfigured": "true",
+        "docOutlineVisible": "1",
+        "rmdVisualModeLocation": "2762:1184.800048828125",
+        "rmdVisualCollapsedChunks": ""
     },
     "folds": "",
-    "lastKnownWriteTime": 1702536674,
+    "lastKnownWriteTime": 1702608116,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1702536674522,
+    "last_content_update": 1702608116818,
     "read_only": false,
     "read_only_alternatives": []
 }

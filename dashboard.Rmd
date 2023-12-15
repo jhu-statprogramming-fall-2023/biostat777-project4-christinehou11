@@ -1,9 +1,10 @@
 ---
-title: "Project 4"
+title: "Project 4 Dashboard"
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
+    css: style.css
 runtime: shiny
 ---
 
@@ -15,7 +16,6 @@ library(jpeg)
 library(ggplot2)
 library(tidyverse)
 ```
-
 
 ```{r global, message=FALSE,warning=FALSE}
 # Test if a directory named data exists locally
@@ -42,35 +42,71 @@ load(here::here("data","tuesdata_cocktails.rda"))
 # Optimize the data 
 cocktails =cocktails %>%
   mutate(alcoholic = tolower(alcoholic)) %>%
-  mutate(alcoholic = if_else(is.na(alcoholic), "Unknown", alcoholic)) %>%
+  mutate(alcoholic = if_else(is.na(alcoholic), "Unknown", alcoholic)) %>% 
+  mutate(glass = if_else(glass == "Collins Glass","Collins glass", glass)) %>%
+  mutate(glass = if_else(glass == "Cocktail Glass","Cocktail glass", glass)) %>%
+  mutate(glass = if_else(glass == "Shot Glass","Shot glass", glass)) %>%
+  mutate(glass = if_else(glass == "Highball Glass","Highball glass", glass)) %>%
+  mutate(glass = if_else(glass == "Champagne Flute","Champagne flute", glass)) %>%
+  mutate(glass = if_else(glass == "Old-Fashioned glass","Old-fashioned glass", glass)) %>%
+  mutate(glass = if_else(glass == "Punch Bowl","Punch bowl", glass)) %>%
+  mutate(glass = if_else(glass == "Margarita/Coupette glass","Margarita glass", glass)) %>%
+  mutate(glass = if_else(glass == "Mason jar","Jar", glass)) %>%
+  mutate(glass = if_else(glass == "Coffee Mug","Coffee mug", glass)) %>%
   select(-c(row_id, id_drink, date_modified, iba, video))
 ```
 
+# About {data-icon="ion-information-circled"}
 
-About {data-icon="ion-information-circled"}
-=====================================
+**Welcome to Alcoholic Drink World!**
 
-**Purpose**
+## Column {.tabset .tab-fade data-height="10" data-width="200"}
 
-The dashboard allows for audiences to know about different cocktail drinks (alcoholic, non-alcoholic), and also know about the number or name of ingredients used in each drink. This dashboard can help the audiences have a glimpse or evaluation of cocktail drinks that they are intereted in. 
+### Purpose
+
+The dashboard allows for audiences to know about different cocktail drinks (alcoholic, non-alcoholic, optional), and also know about the number or name of ingredients used in each drink. This dashboard can help the audiences have a glimpse or evaluation of cocktail drinks that they are interested in. They can also see the glass recommended for the specific glass.
 
 The source showing alcoholic drink data for analysis comes from <a href = "https://www.tidytuesday.com/">TidyTuesday</a>, <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26">May 26th 2020</a>.
 
-**Video**
+The variables I am mainly interested in are:
 
-<iframe width="1572" height="982" src="https://www.youtube.com/embed/GB1LbKCe3OI"></iframe>
+-   `drink`: drink name
+
+-   `alcoholic`: the type of drink - alcoholic, non alcoholic, optional
+
+-   `category`: the category of drink, eg cocktail, shot, etc
+
+-   `glass`: recommended glass type
+
+-   `ingredient`: ingredients used in the drink
+
+The complete data dictionary is <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26#:~:text=Data%20Dictionary-,cocktails,-.csv">here</a>.
+
+Using these variables, I would like to know **How does the number of ingredients used related to the different categories of alcoholic cocktail drinks?**
+
+<a href="https://drinkohza.com/blogs/the-daily-squeeze/what-is-a-cocktail">Img Credit</a>
+
+```{r}
+output[["purpose"]] <- renderImage({
+  filename <- paste0(getwd(),"/image.jpeg")
+  list(src = filename, height = 500)
+},deleteFile=FALSE)
+
+imageOutput("purpose", height = "500px")
+```
 
 
-Data {data-icon="ion-android-list"}
-=====================================
+### Video Description
+
+<iframe width="1385" height="624" src="https://www.youtube.com/embed/pifSnj4CgEM" title="Dashboard presentation for project 4" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+
+# Data {data-icon="ion-android-list"}
 
 ### Description
 
-The source showing Cocktail data for analysis comes from <a href = "https://www.stephaniehicks.com/jhustatprogramming2023/projects/2023-11-28-project-3/#:~:text=data%20set%20from-,TidyTuesday,-that%20you%20have">TidyTuesday</a>, <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26">May 26th 2020</a>. 
+The source showing Cocktail data for analysis comes from <a href = "https://www.tidytuesday.com/">TidyTuesday</a>, <a href="https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-05-26">May 26th 2020</a>.
 
-There are totally 2 different `.csv` data on the website, but I only choose one of them for personal preferences.
-
-To make the data table more convenient to see, I delete some useless columns.
+There are multiple different `.csv` files containing different kinds of cocktail drink information, but I only choose one of them (`cocktails.csv`) for personal preferences.
 
 ```{r}
 renderDataTable({
@@ -81,13 +117,9 @@ renderDataTable({
 })
 ```
 
+# Ingredients Count {data-icon="ion-android-image"}
 
-
-Cocktails Pictures {data-icon="ion-ios-wineglass"}
-=====================================
-
-Inputs {.sidebar}
------------------------------------------------------------------------
+## Inputs {.sidebar}
 
 ```{r}
 type = unique(cocktails$alcoholic)
@@ -114,40 +146,41 @@ renderUI({
 })
 ```
 
-Row
------------------------------------------------------------------------
+## Row
 
 ### Data
 
 ```{r}
-renderTable(
-  cocktails %>%
+selectedData1 = reactive({
+  data = cocktails %>%
     filter(category == input$category,
            alcoholic == input$type,
            drink == input$drink)
+  
+  data
+})
+
+renderTable(
+  selectedData1()
 )
 ```
 
-### Plot {data-height=550}
+### Plot {data-height="550"}
 
 ```{r}
 renderPlot({
+  sl_category = input$category
+  sl_type = input$type
+  sl_drink = input$drink
+  
   max_ing = max(cocktails$ingredient_number)
   min_ing = min(cocktails$ingredient_number)
-  selection = cocktails %>%
-    filter(category == input$category,
-           alcoholic == input$type,
-           drink == input$drink) %>%
-    summarise(n = n()) %>%
-    pull(n)
+  selection = max(cocktails$ingredient_number[cocktails$drink== sl_drink
+                                                 & cocktails$alcoholic == sl_type
+                                                 & cocktails$category== sl_category])
   
-  df = data.frame(max = max_ing,
-                  min = min_ing,
-                  drink = selection)
-  
-  df %>%
-    ggplot() +
-    geom_histogram(aes(x = "Drink Selected", y = drink),
+  ggplot() +
+    geom_histogram(aes(x = sl_drink, y = selection),
                    stat = "identity", fill = "skyblue") +
     geom_histogram(aes(x = "Max", y = max_ing),
                    stat = "identity", fill = "pink") +
@@ -157,25 +190,86 @@ renderPlot({
     labs(title = paste("Number of Ingredients Used in ",input$drink),
          subtitle = "Compared to maximum number of ingredients (12) and minimum number of ingredients (1)",
          x = "Category",
-         y = "Count") +
+         y = "Count",
+         caption = "Christine Hou") +
     theme_classic()
   }
 )
 ```
 
+# Drink & Glass {data-icon="ion-ios-wineglass"}
+
+## Inputs {.sidebar}
+
+```{r}
+cup = unique(cocktails$glass)
+selectInput('cup', 'Select Glass:', cup)
+```
+
+## Column {data-width="450"}
+
+### Glass Picture
+
+```{r}
+output[["image"]] <- renderImage({
+  filename <- paste0(getwd(),"/glass/",input$cup,".jpeg")
+  list(src = filename, height = 300)
+},deleteFile=FALSE)
+
+imageOutput("image", height = "300px")
+```
+
+### Summary
+
+```{r}
+selectedData4 = reactive({
+    cocktails %>%
+    filter(glass == input$cup) %>% 
+    select(-c(measure)) %>%
+    pivot_wider(names_from = "ingredient_number",
+                values_from = "ingredient") %>%
+    select(category, glass) %>%
+    group_by(category) %>%
+    summarise(n = n()) %>%
+    mutate(percentage = n/sum(n)*100)%>%
+    mutate(category = as.factor(category))
+})
 
 
-Plot1 {data-icon="ion-android-image"}
-=====================================
+renderPlot({
+    ggplot(selectedData4()) +
+    geom_bar(aes(x = "", y = percentage, fill = category),
+             stat = "identity") +
+    coord_polar(theta = "y", start=0)+
+    labs(title = paste("Categories of Drink Used by ",input$cup),
+         caption = "Christine Hou") +
+    theme_void()
+  }
+)
+```
 
+## Column {data-width =550}
 
+### Drinks
 
+```{r}
+selectedData3 = reactive({
+  cocktails %>%
+    filter(glass == input$cup) %>%
+    select(-c(measure)) %>%
+    pivot_wider(names_from = "ingredient_number",
+                values_from = "ingredient") %>%
+    select(drink, alcoholic, category)
+})
 
-Analysis {data-icon="ion-ios-analytics"}
-=====================================
+renderTable(
+  selectedData3()
+)
+```
 
-Row {data-height=450}
--------------------------------------
+# Analysis {data-icon="ion-ios-analytics"}
+
+## Row {data-height="450"}
 
 ### Alcoholic Drink Category Count
 
@@ -229,8 +323,7 @@ df2 %>%
     fill = "Number of Ingredients")
 ```
 
-Row {data-height=550}
--------------------------------------
+## Row {data-height="550"}
 
 ### Ingredients Distribution Per Alcoholic Drink Category
 
@@ -256,4 +349,3 @@ df3 %>%
     caption = "Christine Hou"
   )
 ```
-
